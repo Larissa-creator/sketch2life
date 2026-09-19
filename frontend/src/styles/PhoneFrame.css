@@ -1,0 +1,25 @@
+.app-shell {
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  background: var(--color-canvas);
+}
+
+.phone-frame {
+  width: 100%;
+  max-width: var(--phone-width);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.phone-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}

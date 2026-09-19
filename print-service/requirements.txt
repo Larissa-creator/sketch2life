@@ -1,0 +1,8 @@
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+python-dotenv>=1.0.0
+httpx>=0.24.0
+paho-mqtt>=1.6.0
+aiofiles>=23.0.0
+bambulabs-api>=2.6.0

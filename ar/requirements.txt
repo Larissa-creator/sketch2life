@@ -1,0 +1,11 @@
+# AR runs inside the frontend — no Python packages here.
+#
+# Install:
+#   cd frontend
+#   npm install
+#
+# Or from project root:
+#   .\setup.ps1
+#
+# Key npm dependency:
+#   @google/model-viewer  (see frontend/package.json)

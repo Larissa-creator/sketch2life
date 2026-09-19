@@ -1,0 +1,11 @@
+.error-icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.error-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-text);
+}

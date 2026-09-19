@@ -1,0 +1,240 @@
+.ar-model-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.ar-viewer-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.ar-model-block .model-viewer-el {
+  width: 100%;
+  height: 280px;
+  background: var(--color-frame);
+  border-radius: var(--radius-lg);
+}
+
+.ar-model-block .model-viewer-el--preview::part(default-ar-button) {
+  display: none;
+}
+
+.ar-model-block .model-viewer-el--ar-active {
+  height: min(52vh, 420px);
+}
+
+.ar-model-block .model-viewer-el--ar-active::part(default-ar-button) {
+  display: none;
+}
+
+.ar-page-btn {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 2;
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 14px 28px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.ar-mobile-opening {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+}
+
+.ar-mobile-opening .hint {
+  margin: 0;
+  text-align: center;
+}
+
+.ar-model-block .model-viewer-el--loading {
+  opacity: 0.6;
+}
+
+.ar-load-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.ar-empty-hint,
+.ar-error-hint {
+  text-align: center;
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+.ar-platform-badge {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  background: var(--color-frame);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+}
+
+.ar-link-btn {
+  background: none;
+  border: none;
+  color: var(--color-primary-dark);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.ar-link-btn:active {
+  opacity: 0.8;
+}
+
+.ar-share-lan-link {
+  display: block;
+  margin: 8px 0 4px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  text-align: center;
+  word-break: break-all;
+}
+
+.ar-share-phone-link {
+  display: inline-block;
+  margin: 10px 0 4px;
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: #1a1a1a;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+}
+
+.ar-share-url-preview {
+  margin: 6px 0 0;
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  word-break: break-all;
+  text-align: center;
+  max-width: 100%;
+}
+
+.ar-share-panel {
+  width: 100%;
+  margin-top: 4px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  background: var(--color-frame);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.ar-share-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ar-share-desc {
+  margin: 0;
+  text-align: center;
+  font-size: 0.82rem;
+}
+
+.ar-share-qr {
+  display: block;
+  border-radius: 12px;
+  background: #fff;
+  padding: 8px;
+}
+
+.ar-share-ready {
+  margin: 0;
+  text-align: center;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+.ar-share-status {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+
+.ar-share-status--ok {
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+}
+
+.ar-share-status--warn {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+}
+
+.ar-share-status--info {
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+}
+
+.ar-share-status--error {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+}
+
+.ar-share-status-title {
+  margin: 0 0 4px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.ar-share-status-detail {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+.ar-share-qr-hidden {
+  margin: 0;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.ar-share-footnote {
+  margin: 0;
+  font-size: 0.72rem;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.viewer-sketch-thumb--compact {
+  margin-top: 4px;
+  opacity: 0.85;
+}

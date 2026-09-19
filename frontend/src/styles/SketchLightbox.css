@@ -1,0 +1,53 @@
+.sketch-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.82);
+}
+
+.sketch-lightbox-img {
+  max-width: min(92vw, 520px);
+  max-height: 82vh;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.sketch-lightbox-close {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: 16px;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #1a1a1a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.viewer-sketch-thumb--clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.viewer-sketch-thumb--clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.viewer-sketch-thumb--clickable img {
+  width: 56px;
+  height: 56px;
+}
+
+.viewer-sketch-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.68rem;
+  color: var(--color-primary-dark);
+}

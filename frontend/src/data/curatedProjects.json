@@ -1,0 +1,15 @@
+{
+  "provided": [
+    {
+      "key": "sample-demo-cat",
+      "jobId": "demo-praesentation",
+      "name": "Demo cat",
+      "description": "Ready-made sample for testing viewer, AR and print",
+      "thumb": "/demo-sketch.png",
+      "modelUrl": "/demo-model.glb?v=2",
+      "threeMfUrl": "/demo-model.3mf?v=2",
+      "imageSource": "demo",
+      "createdAt": "2026-01-01T12:00:00.000Z"
+    }
+  ]
+}

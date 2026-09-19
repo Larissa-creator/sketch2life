@@ -1,0 +1,118 @@
+.print-color-preview {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 2px solid var(--color-btn-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.print-color-preview-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.print-color-preview-desc {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.print-color-preview-body {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.print-color-preview-sketch {
+  flex: 0 0 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.print-color-preview-sketch img {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  background: #fff;
+  border: 1px solid var(--color-btn-secondary);
+}
+
+.print-color-preview-sketch span {
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.print-color-preview-mock {
+  flex: 1;
+  min-height: 88px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  background: var(--color-frame);
+  border: 1px dashed var(--color-btn-secondary);
+}
+
+.print-color-preview-band {
+  flex: var(--band-flex, 1);
+  min-height: 14px;
+  border-radius: 6px;
+  background: var(--band-color);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.print-color-preview-legend {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.print-color-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.print-color-preview-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.print-color-preview-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 0.8rem;
+}
+
+.print-color-preview-label strong {
+  font-weight: 700;
+}
+
+.print-color-preview-label span:last-child {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.print-color-preview-note {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}

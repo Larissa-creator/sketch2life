@@ -1,0 +1,3 @@
+# Nur für Tests/CI - nicht Teil des Railway-Images.
+-r requirements.txt
+pytest>=8.0.0

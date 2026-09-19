@@ -1,0 +1,92 @@
+.print-simple-colors {
+  width: 100%;
+  padding: 18px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--color-frame);
+  text-align: center;
+}
+
+.print-simple-colors-title {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.print-simple-colors-desc {
+  margin: 0 0 16px;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+.print-simple-swatches {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.print-simple-swatch {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.print-simple-swatch-dot {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--swatch);
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+}
+
+.print-simple-swatch--active {
+  border-color: var(--color-primary);
+}
+
+.print-simple-swatch-check {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  pointer-events: none;
+}
+
+.print-simple-selected {
+  margin: 14px 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.print-simple-selected strong {
+  color: var(--color-text);
+}
+
+.print-success {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.print-simple-colors--disabled {
+  opacity: 0.55;
+}
+
+.print-simple-colors--disabled .print-simple-swatch {
+  cursor: not-allowed;
+}

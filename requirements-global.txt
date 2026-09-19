@@ -1,0 +1,37 @@
+# Sketch2Life — install these tools on the university PC first
+#
+# 1. Git
+#    https://git-scm.com/download/win
+#
+# 2. Node.js LTS (includes npm)
+#    https://nodejs.org/
+#
+# 3. Python 3.10 or newer
+#    https://www.python.org/downloads/
+#    During setup: enable "Add Python to PATH"
+#
+# 4. Meshy API key (for 3D generation)
+#    https://www.meshy.ai/
+#
+# Verify in PowerShell:
+#   node -v
+#   npm -v
+#   python --version
+#   git --version
+#
+# Clone the project (branch ilde-frontend):
+#   git clone -b ilde-frontend https://git.uni-due.de/isy/praxisprojekte/sketch-to-life.git
+#   cd sketch-to-life
+#
+# Install all project dependencies (Python venvs + npm):
+#   Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+#   .\setup.ps1
+#
+# Add your Meshy key in backend\.env:
+#   API_KEY=your_meshy_key_here
+#
+# Start the workshop:
+#   .\start-dev.ps1
+#
+# Optional (if phones cannot connect):
+#   .\open-firewall.ps1    (run PowerShell as Administrator)

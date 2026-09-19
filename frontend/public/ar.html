@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>Sketch2Life AR</title>
+    <script
+      type="module"
+      src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.2.0/model-viewer.min.js"
+    ></script>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, sans-serif;
+        background: #f5f0e8;
+        color: #1a1a1a;
+      }
+
+      model-viewer {
+        width: 100vw;
+        height: 100dvh;
+        display: block;
+        background: #f5f0e8;
+      }
+
+      .ar-page-btn {
+        position: fixed;
+        left: 50%;
+        bottom: max(24px, env(safe-area-inset-bottom));
+        transform: translateX(-50%);
+        z-index: 3;
+        background: #7ec8e3;
+        border: none;
+        border-radius: 999px;
+        padding: 16px 32px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        cursor: pointer;
+        white-space: nowrap;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      }
+
+      model-viewer::part(default-ar-button) {
+        display: none;
+      }
+
+      .ar-page-btn {
+        transform: scale(1);
+      }
+
+      @media (max-width: 768px) {
+        .ar-page-btn {
+          font-size: 1.15rem;
+          padding: 18px 36px;
+        }
+      }
+
+      .ar-note {
+        position: fixed;
+        left: 50%;
+        bottom: max(24px, env(safe-area-inset-bottom));
+        transform: translateX(-50%);
+        z-index: 3;
+        margin: 0;
+        max-width: min(90vw, 420px);
+        background: #fff;
+        border-radius: 16px;
+        padding: 14px 20px;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        color: #57534e;
+        text-align: center;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      }
+
+      .ar-note[hidden] {
+        display: none;
+      }
+
+      .status-panel {
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: #f5f0e8;
+        text-align: center;
+      }
+
+      .status-panel.hidden {
+        display: none;
+      }
+
+      .status-panel p {
+        margin: 0 0 8px;
+        line-height: 1.45;
+      }
+
+      .status-panel .status-title {
+        font-weight: 700;
+        font-size: 1rem;
+      }
+
+      .status-panel .status-detail {
+        font-size: 0.85rem;
+        color: #57534e;
+      }
+
+      .status-panel.error .status-title {
+        color: #991b1b;
+      }
+
+      .ar-back-btn {
+        position: fixed;
+        top: max(12px, env(safe-area-inset-top));
+        left: 12px;
+        z-index: 10;
+        background: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 10px 16px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <button type="button" class="ar-back-btn" id="back-btn">← Back</button>
+    <div id="status" class="status-panel">
+      <div>
+        <p class="status-title">Loading model...</p>
+        <p class="status-detail">Please wait a moment.</p>
+      </div>
+    </div>
+
+    <model-viewer
+      id="ar-viewer"
+      alt="Sketch2Life 3D model"
+      ar
+      ar-modes="webxr scene-viewer quick-look"
+      ar-scale="auto"
+      ar-placement="floor"
+      camera-controls
+      touch-action="pan-y"
+      crossorigin="anonymous"
+      shadow-intensity="1"
+      hidden
+    >
+      <button slot="ar-button" type="button" class="ar-page-btn">
+        View in AR
+      </button>
+    </model-viewer>
+
+    <p class="ar-note" id="ar-note" hidden></p>
+
+    <script>
+      const statusEl = document.getElementById("status");
+      const viewer = document.getElementById("ar-viewer");
+      const backBtn = document.getElementById("back-btn");
+      const noteEl = document.getElementById("ar-note");
+
+      backBtn.addEventListener("click", () => {
+        if (window.history.length > 1) {
+          window.history.back();
+          return;
+        }
+        window.location.href = window.location.origin + "/viewer";
+      });
+
+      function showStatus(title, detail, isError) {
+        statusEl.classList.remove("hidden");
+        statusEl.classList.toggle("error", Boolean(isError));
+        statusEl.innerHTML =
+          "<div><p class=\"status-title\">" +
+          title +
+          "</p><p class=\"status-detail\">" +
+          detail +
+          "</p></div>";
+      }
+
+      function hideStatus() {
+        statusEl.classList.add("hidden");
+        viewer.hidden = false;
+      }
+
+      // Format: ?<glb-url>[&usdz=<usdz-url>]
+      function readParams() {
+        const raw = window.location.search.substring(1);
+        if (!raw) return { modelUrl: "", usdzUrl: "" };
+
+        let modelUrl = "";
+        let usdzUrl = "";
+        for (const part of raw.split("&")) {
+          if (part.startsWith("usdz=")) {
+            usdzUrl = decodeURIComponent(part.substring(5));
+          } else if (!modelUrl) {
+            modelUrl = decodeURIComponent(part);
+          }
+        }
+        return { modelUrl, usdzUrl };
+      }
+
+      const { modelUrl, usdzUrl } = readParams();
+
+      const isIOS =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const isAndroid = /Android/i.test(navigator.userAgent);
+
+      function disableIosAr() {
+        viewer.removeAttribute("ar");
+        noteEl.textContent =
+          "No AR file for this model. Generate a new 3D object to use AR on iPhone.";
+        noteEl.hidden = false;
+      }
+
+      if (isIOS) {
+        viewer.setAttribute("ar-modes", "quick-look");
+        // Fertiges USDZ statt GLB-Konvertierung im Browser - erst prüfen, dann AR anbieten.
+        if (usdzUrl) {
+          fetch(usdzUrl + "?check=1")
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.available) {
+                viewer.setAttribute("ios-src", usdzUrl);
+              } else {
+                disableIosAr();
+              }
+            })
+            .catch(disableIosAr);
+        }
+      } else if (isAndroid) {
+        viewer.setAttribute("ar-modes", "scene-viewer webxr quick-look");
+      }
+
+      if (!modelUrl || modelUrl.trim() === "") {
+        showStatus(
+          "No 3D model in URL",
+          "Scan the QR again. Open the app via the PC IP (not localhost).",
+          true,
+        );
+      } else {
+        viewer.addEventListener("load", hideStatus);
+        viewer.addEventListener("error", () => {
+          showStatus(
+            "Could not load model",
+            "Check Wi-Fi and backend (port 8000). For demo, generate a new QR from the PC.",
+            true,
+          );
+        });
+        viewer.setAttribute("src", modelUrl);
+
+        window.setTimeout(() => {
+          if (!statusEl.classList.contains("hidden")) {
+            showStatus(
+              "Loading is taking too long",
+              "Cannot reach " +
+                modelUrl.split("/")[2] +
+                ". Same Wi-Fi as the PC? Scan the QR again.",
+              true,
+            );
+          }
+        }, 12000);
+      }
+    </script>
+  </body>
+</html>
