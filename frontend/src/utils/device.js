@@ -19,7 +19,7 @@ export function getARPlatformInfo() {
       platform: "ios",
       format: "GLB / USDZ",
       hint: "Opens Apple AR Quick Look.",
-      buttonLabel: "View in AR",
+      buttonLabel: "View in Augmented Reality",
     };
   }
 
