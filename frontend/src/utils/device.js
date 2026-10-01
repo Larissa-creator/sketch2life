@@ -28,7 +28,7 @@ export function getARPlatformInfo() {
       platform: "android",
       format: "GLB",
       hint: "Opens Google Scene Viewer.",
-      buttonLabel: "View in AR",
+      buttonLabel: "View in Augmented Reality",
     };
   }
 
