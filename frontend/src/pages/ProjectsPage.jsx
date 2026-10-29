@@ -480,7 +480,7 @@ function ProjectsPage() {
     if (project.status === "starting" || project.status === "processing") return;
 
     const confirmed = window.confirm(
-      "Delete this project?\n\nFor server projects, it will be removed for all participants.",
+      "Delete this project?\n\nThe 3D model will be removed permanently.",
     );
     if (!confirmed) return;
 
@@ -488,7 +488,11 @@ function ProjectsPage() {
     try {
       if (project.jobId) {
         if (project.source === "server" || project.source === "local") {
-          await deleteServerProject(project.jobId);
+          const deleted = await deleteServerProject(project.jobId);
+          if (!deleted) {
+            window.alert("Could not delete the project. Check your connection and try again.");
+            return;
+          }
         }
         removeProject(project.jobId);
         setServerProjects((prev) => prev.filter((p) => p.job_id !== project.jobId));
@@ -556,7 +560,8 @@ function ProjectsPage() {
               onOpen={openProject}
               onDelete={deleteProject}
               onRegenerate={regenerateProject}
-              allowDelete={role === "admin"}
+              // Eigene Projekte darf jede:r löschen (Backend prüft den Besitz).
+              allowDelete
               allowRegenerate={mayGenerate}
             />
           )}

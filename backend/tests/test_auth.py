@@ -192,9 +192,19 @@ def test_rotating_code_keeps_existing_sessions_alive(client, workshop, admin, mi
 
 # --- Löschen -----------------------------------------------------------------
 
-def test_only_admin_deletes(client, jobs, mia, admin):
-    assert client.delete("/projects/job-mia-1", headers=mia).status_code == 403
+def test_attendee_cannot_delete_foreign_project(client, jobs, mia):
+    assert client.delete("/projects/job-ben-1", headers=mia).status_code == 404
+    assert db.get_job("job-ben-1") is not None
 
-    response = client.delete("/projects/job-mia-1", headers=admin)
+
+def test_attendee_deletes_own_project(client, jobs, mia):
+    response = client.delete("/projects/job-mia-1", headers=mia)
     assert response.status_code == 200
     assert db.get_job("job-mia-1") is None
+    assert job_ids(client, mia) == []
+
+
+def test_admin_deletes_any_project(client, jobs, admin):
+    response = client.delete("/projects/job-ben-1", headers=admin)
+    assert response.status_code == 200
+    assert db.get_job("job-ben-1") is None

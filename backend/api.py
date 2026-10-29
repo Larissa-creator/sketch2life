@@ -1194,7 +1194,15 @@ def list_projects(session: dict = Depends(require_session)):
 
 
 @app.delete("/projects/{job_id}")
-def delete_project(job_id: str, admin: dict = Depends(require_admin)):
+def delete_project(job_id: str, session: dict = Depends(require_session)):
+    # Teilnehmende löschen nur eigene Projekte, der Admin alle.
+    _require_job_access(session, job_id)
+    if jobs.get(job_id, {}).get("status") in ("pending", "processing"):
+        raise HTTPException(
+            status_code=409,
+            detail="Das Modell wird gerade erzeugt und kann noch nicht gelöscht werden.",
+        )
+
     removed: list[str] = []
     for target in (
         model_glb_path(job_id),
