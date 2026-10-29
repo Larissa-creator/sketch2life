@@ -270,13 +270,20 @@ export async function listServerProjects() {
   }
 }
 
+/** Löscht ein Projekt; liefert { ok, error } mit der Begründung vom Server. */
 export async function deleteServerProject(jobId) {
-  if (!hasLiveApi() || !jobId) return false;
+  if (!hasLiveApi() || !jobId) {
+    return { ok: false, error: "Backend is not configured." };
+  }
   try {
     await apiClient.delete(`/projects/${encodeURIComponent(jobId)}`);
-    return true;
-  } catch {
-    return false;
+    return { ok: true, error: null };
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      const detail = error.response.data?.detail ?? error.response.statusText;
+      return { ok: false, error: `${detail} (${error.response.status})` };
+    }
+    return { ok: false, error: "Could not reach the server. Check your connection." };
   }
 }
 

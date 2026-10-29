@@ -88,10 +88,13 @@ function WorkshopModels({ workshop, onChanged }) {
 
   const onDelete = async (jobId) => {
     if (!window.confirm("Delete this model (files + sketch)?")) return;
-    if (await deleteServerProject(jobId)) {
-      setReloadKey((key) => key + 1);
-      onChanged();
+    const result = await deleteServerProject(jobId);
+    if (!result.ok) {
+      window.alert(`Could not delete the model.\n\n${result.error}`);
+      return;
     }
+    setReloadKey((key) => key + 1);
+    onChanged();
   };
 
   if (error) return <p className="hint login-error">{error}</p>;

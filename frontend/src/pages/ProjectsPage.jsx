@@ -488,9 +488,9 @@ function ProjectsPage() {
     try {
       if (project.jobId) {
         if (project.source === "server" || project.source === "local") {
-          const deleted = await deleteServerProject(project.jobId);
-          if (!deleted) {
-            window.alert("Could not delete the project. Check your connection and try again.");
+          const result = await deleteServerProject(project.jobId);
+          if (!result.ok) {
+            window.alert(`Could not delete the project.\n\n${result.error}`);
             return;
           }
         }
