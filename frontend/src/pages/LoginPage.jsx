@@ -86,7 +86,7 @@ function LoginPage() {
             type="text"
             autoComplete="given-name"
             maxLength={40}
-            placeholder="e.g. Mia"
+            placeholder="e.g. 01"
             value={name}
             onChange={(event) => setName(event.target.value)}
           />
