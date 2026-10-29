@@ -511,8 +511,8 @@ function ProjectsPage() {
 
   const emptyHint =
     serverReachable === false
-      ? "Server not reachable. Start the app with start-dev.ps1, then tap Refresh."
-      : "No sketches yet. Tap New sketch on the home screen to create your first 3D model.";
+      ? "Server not reachable."
+      : "No projects yet. Tap New 3D model to create your first 3D model.";
 
   return (
     <>
