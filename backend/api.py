@@ -98,6 +98,10 @@ app.add_middleware(
 )
 
 jobs: dict[str, dict] = {}
+# Jobs, für die gerade wirklich eine Generierung läuft. Der gespeicherte
+# Status reicht dafür nicht: nach einem Neustart kommen Jobs ohne Modell
+# als "pending" zurück, obwohl nichts mehr läuft.
+running_jobs: set[str] = set()
 
 ensure_storage_dir()
 migrate_legacy_outputs()
@@ -398,6 +402,7 @@ def _job_to_response(job_id: str, job: dict) -> JobStatus:
 
 async def process_job(job_id: str, image_data: str):
     timings = {}
+    running_jobs.add(job_id)
     try:
         t0 = time.time()
         task_id = await asyncio.to_thread(sketch_to_3d, image_data)
@@ -429,6 +434,8 @@ async def process_job(job_id: str, image_data: str):
 
     except Exception as exc:
         jobs[job_id].update({"status": "failed", "error": str(exc)})
+    finally:
+        running_jobs.discard(job_id)
 
 
 async def _text_schritt(job_id: str, erstellen, arg: str, offset: int):
@@ -449,6 +456,7 @@ async def process_text_job(job_id: str, prompt: str):
     """Preview (Geometrie), dann Refine (Textur). Nur der Refine-Task wird
     als task_id gespeichert - Download, AR und Druck nutzen also immer das
     texturierte Modell, wie bei Image-to-3D."""
+    running_jobs.add(job_id)
     try:
         t0 = time.time()
         preview_id, _ = await _text_schritt(
@@ -469,6 +477,8 @@ async def process_text_job(job_id: str, prompt: str):
 
     except Exception as exc:
         jobs[job_id].update({"status": "failed", "error": str(exc)})
+    finally:
+        running_jobs.discard(job_id)
 
 
 def _start_text_job(
@@ -1197,7 +1207,7 @@ def list_projects(session: dict = Depends(require_session)):
 def delete_project(job_id: str, session: dict = Depends(require_session)):
     # Teilnehmende löschen nur eigene Projekte, der Admin alle.
     _require_job_access(session, job_id)
-    if jobs.get(job_id, {}).get("status") in ("pending", "processing"):
+    if job_id in running_jobs:
         raise HTTPException(
             status_code=409,
             detail="Das Modell wird gerade erzeugt und kann noch nicht gelöscht werden.",

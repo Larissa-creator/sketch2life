@@ -286,7 +286,8 @@ function ProjectsPage() {
           failReason: job.failReason,
           generationId: job.id,
           source: "session",
-          canDelete: false,
+          // Laufende Jobs blendet ProjectList ohnehin aus (isBusy).
+          canDelete: true,
           hasGlb: serverHasGlb,
           hasSketch,
           needsRegenerate:
@@ -487,7 +488,8 @@ function ProjectsPage() {
     setDeletingKey(project.key);
     try {
       if (project.jobId) {
-        if (project.source === "server" || project.source === "local") {
+        // Sample-Projekte liegen im Frontend, alle anderen auch auf dem Server.
+        if (project.source !== "provided") {
           const result = await deleteServerProject(project.jobId);
           if (!result.ok) {
             window.alert(`Could not delete the project.\n\n${result.error}`);

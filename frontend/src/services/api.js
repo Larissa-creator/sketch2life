@@ -279,6 +279,11 @@ export async function deleteServerProject(jobId) {
     await apiClient.delete(`/projects/${encodeURIComponent(jobId)}`);
     return { ok: true, error: null };
   } catch (error) {
+    // 404: auf dem Server ist nichts (mehr) da - z. B. ein Projekt, das nur
+    // noch im localStorage stand. Für die Liste zählt das als gelöscht.
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return { ok: true, error: null };
+    }
     if (axios.isAxiosError(error) && error.response) {
       const detail = error.response.data?.detail ?? error.response.statusText;
       return { ok: false, error: `${detail} (${error.response.status})` };

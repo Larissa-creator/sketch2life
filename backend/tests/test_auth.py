@@ -10,6 +10,7 @@ kein pytest-randomly.
 
 import db
 from conftest import ADMIN_PASSWORD, job_ids
+from storage_manager import sketch_path_for_ext
 
 
 # --- ohne Login --------------------------------------------------------------
@@ -202,6 +203,20 @@ def test_attendee_deletes_own_project(client, jobs, mia):
     assert response.status_code == 200
     assert db.get_job("job-mia-1") is None
     assert job_ids(client, mia) == []
+
+
+def test_project_without_model_can_be_deleted(client, workshop, mia):
+    """Nach einem Neustart kommt ein Job ohne Modell als "pending" zurück,
+    obwohl keine Generierung mehr läuft - löschen muss trotzdem gehen."""
+    db.register_job("job-mia-sketch", workshop["id"], "Mia")
+    sketch = sketch_path_for_ext("job-mia-sketch", "jpg")
+    sketch.write_bytes(b"\xff\xd8jpg")
+    status = client.get("/status/job-mia-sketch", headers=mia).json()
+    assert status["status"] == "pending"
+
+    response = client.delete("/projects/job-mia-sketch", headers=mia)
+    assert response.status_code == 200
+    assert not sketch.exists()
 
 
 def test_admin_deletes_any_project(client, jobs, admin):
