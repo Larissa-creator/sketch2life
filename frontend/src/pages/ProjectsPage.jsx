@@ -36,10 +36,10 @@ function projectReadyLabel(project) {
   return `3D ready · ${formatDisplayDate(project.createdAt)}`;
 }
 
-function buildSketchName(createdAt, jobId) {
-  const date = formatDisplayDate(createdAt);
-  const suffix = jobId ? ` · ${jobId.slice(0, 8)}` : "";
-  return `Sketch ${date}${suffix}`;
+/** Titel der Projektkarte: "Sketch <id>" bzw. "Text <id>" (erste 8 Zeichen). */
+function buildProjectName(jobId, prompt) {
+  const kind = prompt ? "Text" : "Sketch";
+  return jobId ? `${kind} ${jobId.slice(0, 8)}` : kind;
 }
 
 function statusLabel(status, progress) {
@@ -51,6 +51,7 @@ function statusLabel(status, progress) {
 }
 
 function resolveThumb(project, serverEntry) {
+  if (project.prompt || serverEntry?.prompt) return null;
   if (project.thumb) return project.thumb;
   if (project.imageUrl) return project.imageUrl;
   if (project.jobId) {
@@ -146,7 +147,9 @@ function ProjectList({
                   <h2>{project.name}</h2>
                   <p>
                     {needsRegenerate
-                      ? "2D sketch — no 3D model yet"
+                      ? project.prompt
+                        ? "Text — no 3D model yet"
+                        : "2D sketch — no 3D model yet"
                       : isBusy
                         ? statusLabel(project.status, project.progress)
                         : has3d
@@ -260,13 +263,15 @@ function ProjectsPage() {
       })
       .map((job) => {
         const hasGlb = job.status === "done" && Boolean(job.modelUrl || job.jobId);
-        const hasSketch = Boolean(job.thumb || job.imageUrl || job.jobId);
+        // hasSketch = Eingabe vorhanden (Skizze oder Prompt), daraus lässt sich neu erzeugen.
+        const hasSketch = Boolean(job.thumb || job.imageUrl || job.jobId || job.prompt);
         const serverEntry = job.jobId ? serverById.get(job.jobId) : null;
         const serverHasGlb = serverEntry ? Boolean(serverEntry.has_glb) : hasGlb;
         return {
           key: job.id,
           jobId: job.jobId,
-          name: buildSketchName(job.createdAt, job.jobId),
+          prompt: job.prompt,
+          name: buildProjectName(job.jobId, job.prompt),
           createdAt: job.createdAt,
           thumb: resolveThumb(job, serverEntry),
           modelUrl:
@@ -298,12 +303,13 @@ function ProjectsPage() {
         const serverEntry = serverById.get(project.jobId);
         const hasGlb = serverEntry ? Boolean(serverEntry.has_glb) : false;
         const hasSketch = serverEntry
-          ? Boolean(serverEntry.has_sketch)
-          : Boolean(project.thumb);
+          ? Boolean(serverEntry.has_sketch || serverEntry.prompt)
+          : Boolean(project.thumb || project.prompt);
         return {
           key: project.jobId,
           jobId: project.jobId,
-          name: project.name,
+          prompt: project.prompt,
+          name: buildProjectName(project.jobId, project.prompt),
           createdAt: project.createdAt,
           thumb: resolveThumb(project, serverEntry),
           modelUrl: hasGlb ? getGlbDownloadUrl(project.jobId) : null,
@@ -327,18 +333,17 @@ function ProjectsPage() {
       .map((p) => {
         const thumb = resolveThumb({ jobId: p.job_id }, p);
         const hasGlb = Boolean(p.has_glb);
-        const hasSketch = Boolean(p.has_sketch) || Boolean(thumb);
+        const hasSketch = Boolean(p.has_sketch) || Boolean(thumb) || Boolean(p.prompt);
         return {
           key: `server-${p.job_id}`,
           jobId: p.job_id,
-          name: thumb
-            ? buildSketchName(p.created_at, p.job_id)
-            : `Sketch ${p.job_id.slice(0, 8)}…`,
+          prompt: p.prompt ?? null,
+          name: buildProjectName(p.job_id, p.prompt),
           createdAt: p.created_at,
           thumb,
           modelUrl: hasGlb ? getGlbDownloadUrl(p.job_id) : null,
           imageUrl: thumb,
-          imageSource: "upload",
+          imageSource: p.prompt ? "text" : "upload",
           status: hasGlb ? "done" : "sketch-only",
           progress: hasGlb ? 100 : 0,
           threeMfUrl: hasGlb ? getThreeMfDownloadUrl(p.job_id) : null,
@@ -366,6 +371,7 @@ function ProjectsPage() {
         ...existing,
         ...project,
         thumb: project.thumb ?? existing.thumb,
+        prompt: project.prompt ?? existing.prompt,
         hasGlb: existing.hasGlb || project.hasGlb,
         hasSketch: existing.hasSketch || project.hasSketch,
         needsRegenerate: (existing.hasSketch || project.hasSketch) &&
@@ -391,6 +397,8 @@ function ProjectsPage() {
     }
 
     if (projectNeedsRegenerate(project) && project.jobId) {
+      // Text-Projekte haben keine Skizzen-Seite - neu erzeugen nur per Button.
+      if (project.prompt) return;
       navigate(`/project?job=${encodeURIComponent(project.jobId)}`, { replace: false });
       return;
     }
@@ -416,6 +424,20 @@ function ProjectsPage() {
   };
 
   const regenerateProject = async (project) => {
+    if (project.prompt && project.jobId) {
+      const generationId = startGeneration({
+        prompt: project.prompt,
+        imageSource: "text",
+        existingJobId: project.jobId,
+      });
+      if (!generationId) {
+        window.alert("Too many generations running. Wait a moment and try again.");
+        return;
+      }
+      openLoading(navigate, generationId);
+      return;
+    }
+
     if (!project.jobId) {
       window.alert("Sketch image not found on the server. Try creating a new photo.");
       return;
@@ -503,9 +525,9 @@ function ProjectsPage() {
           </button>
           {mayGenerate && (
             <PrimaryButton
-              text="New sketch"
+              text="New 3D Model"
               variant="secondary"
-              onClick={() => navigate("/camera", { replace: true })}
+              onClick={() => navigate("/", { replace: true })}
             />
           )}
         </div>
@@ -524,8 +546,7 @@ function ProjectsPage() {
         </section>
 
         <section className="projects-section">
-          <h2 className="projects-section-title">Your sketches &amp; 3D models</h2>
-
+          <h2 className="projects-section-title">Your 3D models:</h2>
           {userProjects.length === 0 ? (
             <p className="hint projects-empty">{emptyHint}</p>
           ) : (
@@ -545,7 +566,7 @@ function ProjectsPage() {
           {serverReachable === false
             ? "Cannot reach the 3D server. Check that the backend is running on the PC."
             : sketchCount > 0
-              ? `${sketchCount} sketch(es) saved | ${modelCount} with 3D model` +
+              ? `${sketchCount} project(s) saved | ${modelCount} with 3D model` +
                 (pendingCount > 0 ? ` · ${pendingCount} waiting for 3D` : "")
               : "Server connected. Every photo you take is saved here."}
         </p>

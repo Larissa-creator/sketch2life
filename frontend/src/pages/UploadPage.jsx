@@ -27,7 +27,7 @@ function UploadPage() {
 
   return (
     <>
-      <PageHeader title="Upload image" backTo="/" />
+      <PageHeader title="Upload image" backTo="/sketch" />
 
       <div className="page-body">
         <p className="hint">

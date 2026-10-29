@@ -10,6 +10,7 @@ import {
   generateDemo3DModel,
   regenerate3DFromJob,
   start3DConversion,
+  startTextConversion,
   watch3DJob,
 } from "../services/api";
 import { imageUrlToPersistableThumb } from "../utils/image";
@@ -19,8 +20,9 @@ import { saveProject } from "../utils/projects";
 const GenerationContext = createContext(null);
 const MAX_JOBS = 5;
 
-function createJob({ imageUrl, imageSource, thumb }) {
+function createJob({ imageUrl, imageSource, thumb, prompt }) {
   return {
+    prompt: prompt ?? null,
     id: createId(),
     jobId: null,
     status: "starting",
@@ -52,7 +54,7 @@ export function GenerationProvider({ children }) {
   }, []);
 
   const runJob = useCallback(
-    async (id, imageUrl, imageFile, imageSource, existingJobId = null) => {
+    async (id, imageUrl, imageFile, imageSource, existingJobId = null, prompt = null) => {
       const onProgress = (progress, message) => {
         patchJob(id, (job) => ({
           status: "processing",
@@ -78,6 +80,7 @@ export function GenerationProvider({ children }) {
               jobId: result.jobId,
               imageUrl: current?.thumb ?? current?.imageUrl ?? imageUrl,
               imageSource,
+              prompt,
             });
           }
           return;
@@ -115,7 +118,9 @@ export function GenerationProvider({ children }) {
           return;
         }
 
-        const start = await start3DConversion(imageUrl, imageFile, onProgress);
+        const start = prompt
+          ? await startTextConversion(prompt, onProgress)
+          : await start3DConversion(imageUrl, imageFile, onProgress);
         if (!start.ok) {
           finish({ ok: false, reason: start.reason ?? "generation" });
           return;
@@ -136,7 +141,7 @@ export function GenerationProvider({ children }) {
   );
 
   const startGeneration = useCallback(
-    ({ imageUrl, imageFile, imageSource, existingJobId = null }) => {
+    ({ imageUrl, imageFile, imageSource, existingJobId = null, prompt = null }) => {
       const active = jobsRef.current.filter(
         (job) => job.status === "starting" || job.status === "processing",
       );
@@ -148,7 +153,7 @@ export function GenerationProvider({ children }) {
         imageUrl?.startsWith("data:") || imageUrl?.startsWith("/")
           ? imageUrl
           : null;
-      const job = createJob({ imageUrl, imageSource, thumb });
+      const job = createJob({ imageUrl, imageSource, thumb, prompt });
       if (existingJobId) {
         job.jobId = existingJobId;
       }
@@ -158,7 +163,7 @@ export function GenerationProvider({ children }) {
           if (persisted) patchJob(job.id, { thumb: persisted });
         });
       }
-      runJob(job.id, imageUrl, imageFile, imageSource, existingJobId);
+      runJob(job.id, imageUrl, imageFile, imageSource, existingJobId, prompt);
       return job.id;
     },
     [patchJob, runJob],

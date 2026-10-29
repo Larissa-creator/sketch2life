@@ -26,8 +26,7 @@ function ProjectThumb({ sketchUrl, modelUrl }) {
         src={absoluteModelUrl}
         alt=""
         className="project-thumb-model"
-        auto-rotate
-        rotation-per-second="30deg"
+        camera-orbit="0deg 75deg auto"
         interaction-prompt="none"
         camera-controls={false}
         disable-zoom

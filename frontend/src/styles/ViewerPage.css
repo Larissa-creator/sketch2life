@@ -17,18 +17,27 @@
 .viewer-box--panel {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  background: transparent;
+  border-radius: 0;
+  overflow: visible;
 }
 
+/* Modell füllt den ganzen Bereich über der Steuerleiste */
 .viewer-box--panel .model-viewer-el {
-  flex: 1;
-  min-height: 200px;
-  height: 240px;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .viewer-model-wrap {
   position: relative;
   flex: 1;
-  min-height: 200px;
+  min-height: 260px;
+  background: var(--color-frame);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
 .viewer-model-overlay {
@@ -55,8 +64,6 @@
 }
 
 .viewer-touch-panel {
-  background: rgba(255, 255, 255, 0.94);
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
   padding-bottom: 4px;
 }
 
@@ -65,7 +72,11 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  padding: 6px 8px 2px;
+  padding: 8px;
+}
+
+.viewer-touch-legend svg {
+  vertical-align: -0.1em;
 }
 
 .viewer-touch-legend {
@@ -95,6 +106,9 @@
 }
 
 .viewer-touch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 32px;
   height: 32px;
   border: 1px solid var(--color-frame);

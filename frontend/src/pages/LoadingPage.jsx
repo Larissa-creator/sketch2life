@@ -9,6 +9,7 @@ import { useGeneration } from "../context/GenerationContext";
 import { DEMO_SKETCH, getSketchThumbUrl } from "../services/api";
 import { openViewer } from "../utils/navigation";
 import "../styles/ProjectsPage.css";
+import "../styles/TextToModelPage.css";
 
 function resolveGenerationId(searchParams, locationState) {
   return (
@@ -33,7 +34,7 @@ function LoadingPage() {
   );
 
   const sketchPreview = useMemo(() => {
-    if (!job) return null;
+    if (!job || job.prompt) return null;
     if (job.thumb) return job.thumb;
     if (job.imageUrl) return job.imageUrl;
     if (job.imageSource === "demo") return DEMO_SKETCH;
@@ -118,7 +119,8 @@ function LoadingPage() {
     activeCount - (job?.status === "processing" || job?.status === "starting" ? 1 : 0),
   );
 
-  const estimatedSec = job?.imageSource === "demo" ? 5 : 180;
+  // Text-to-3D läuft in zwei Meshy-Schritten (Preview + Refine).
+  const estimatedSec = job?.imageSource === "demo" ? 5 : job?.prompt ? 240 : 180;
 
   return (
     <>
@@ -131,6 +133,13 @@ function LoadingPage() {
         {sketchPreview && (
           <div className="loading-sketch-preview" aria-label="Your sketch">
             <SketchImage candidates={[sketchPreview]} alt="Your sketch" />
+          </div>
+        )}
+
+        {job?.prompt && (
+          <div className="prompt-card">
+            <span className="prompt-card-label">Your Prompt</span>
+            <p className="prompt-card-text">{job.prompt}</p>
           </div>
         )}
 

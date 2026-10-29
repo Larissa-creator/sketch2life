@@ -64,7 +64,7 @@ function LoginPage() {
 
         <form className="login-form" onSubmit={onSubmit}>
           <label className="login-label" htmlFor="login-code">
-            Workshop code
+            Study code
           </label>
           <input
             id="login-code"
@@ -78,7 +78,7 @@ function LoginPage() {
           />
 
           <label className="login-label" htmlFor="login-name">
-            Your first name
+            Your Participant ID
           </label>
           <input
             id="login-name"
@@ -100,10 +100,10 @@ function LoginPage() {
           />
         </form>
 
-        <p className="hint login-hint">
+        {/*<p className="hint login-hint">
           You get the workshop code from your workshop host. Use the same name
           again later to see your models.
-        </p>
+        </p>*/}
 
         {SHOW_DEMO && (
           <button type="button" className="home-demo-btn" onClick={startDemo}>

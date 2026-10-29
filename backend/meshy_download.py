@@ -3,10 +3,16 @@ import requests
 from config import API_KEY
 
 
+def task_url(task_id: str, job_type: str) -> str:
+    """Text-to-3D liegt bei Meshy unter v2, alle anderen Jobs unter v1."""
+    version = "v2" if job_type == "text-to-3d" else "v1"
+    return f"https://api.meshy.ai/openapi/{version}/{job_type}/{task_id}"
+
+
 def task_abrufen(task_id: str, job_type: str = "image-to-3d") -> dict:
     """Holt den Task von Meshy - enthaelt die signierten model_urls."""
     resp = requests.get(
-        f"https://api.meshy.ai/openapi/v1/{job_type}/{task_id}",
+        task_url(task_id, job_type),
         headers={"Authorization": f"Bearer {API_KEY}"},
         timeout=30,
     )

@@ -1,35 +1,26 @@
 import { useNavigate } from "react-router-dom";
-import { FaCamera, FaUpload, FaFolder, FaLightbulb, FaPlay } from "react-icons/fa";
+import { FaPencilAlt, FaKeyboard, FaFolder } from "react-icons/fa";
 import PageHeader from "../components/PageHeader";
 import PrimaryButton from "../components/PrimaryButton";
 import { useAuth } from "../context/AuthContext";
-import { useSketch } from "../context/SketchContext";
-import { DEMO_SKETCH } from "../services/api";
 import WorkshopQrPanel from "../components/WorkshopQrPanel";
 import "../styles/HomePage.css";
 
 const GENERATE_MENU = [
-  { label: "Take Photo", icon: <FaCamera />, path: "/camera" },
-  { label: "Upload Image", icon: <FaUpload />, path: "/upload" },
+  { label: "Sketch to 3D", icon: <FaPencilAlt />, path: "/sketch" },
+  { label: "Text to 3D", icon: <FaKeyboard />, path: "/text" },
 ];
 
 const VIEW_MENU = [
   { label: "Last Projects", icon: <FaFolder />, path: "/projects" },
-  { label: "Tips for better results", icon: <FaLightbulb />, path: "/tips" },
 ];
 
 function HomePage() {
   const navigate = useNavigate();
-  const { setImage } = useSketch();
   const { name, canGenerate, workshopStatus, isDemo, logout } = useAuth();
 
   // Nach dem Workshop: nur noch ansehen, keine neuen Modelle.
   const menu = canGenerate || isDemo ? [...GENERATE_MENU, ...VIEW_MENU] : VIEW_MENU;
-
-  const startDemo = () => {
-    setImage(DEMO_SKETCH, "demo");
-    navigate("/preview", { replace: false });
-  };
 
   return (
     <>
@@ -63,13 +54,6 @@ function HomePage() {
             />
           ))}
         </nav>
-
-        {(import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO === "true") && (
-          <button type="button" className="home-demo-btn" onClick={startDemo}>
-            <FaPlay aria-hidden />
-            Demo mode
-          </button>
-        )}
 
         <button
           type="button"

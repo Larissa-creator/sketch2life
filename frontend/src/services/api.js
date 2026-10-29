@@ -20,6 +20,8 @@ const KI_PUBLIC_URL = (import.meta.env.VITE_KI_PUBLIC_URL ?? API_BASE_URL ?? "")
 const USE_DEV_PROXY =
   import.meta.env.DEV && import.meta.env.VITE_USE_PROXY !== "false";
 const GENERATE_ROUTE = import.meta.env.VITE_GENERATE_ROUTE ?? "/convert";
+const TEXT_GENERATE_ROUTE = "/text-to-3d";
+export const TEXT_PROMPT_MAX = 800;
 const STATUS_PATH = import.meta.env.VITE_STATUS_ROUTE ?? "/status";
 const FILE_FIELD = import.meta.env.VITE_FILE_FIELD ?? "file";
 const PRINT_API_URL = (import.meta.env.VITE_PRINT_API_URL ?? "").replace(/\/$/, "");
@@ -514,6 +516,49 @@ export async function start3DConversion(imageUrl, imageFile, onProgress) {
   }
 }
 
+export async function startTextConversion(prompt, onProgress) {
+  if (!hasLiveApi()) {
+    return { ok: false, reason: "no-api" };
+  }
+
+  try {
+    onProgress?.(5, "Sending your description…");
+    const { data: start } = await apiClient.post(TEXT_GENERATE_ROUTE, { prompt });
+
+    const jobId = pickJobId(start);
+    if (!jobId) {
+      return { ok: false, reason: "generation" };
+    }
+
+    onProgress?.(10, "Generation started…");
+    return { ok: true, jobId };
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (!error.response) {
+        return { ok: false, reason: "network" };
+      }
+      if (error.response.status === 503) {
+        return { ok: false, reason: "no-api-key" };
+      }
+      if (error.response.status < 500) {
+        return { ok: false, reason: "generation" };
+      }
+    }
+    return { ok: false, reason: "network" };
+  }
+}
+
+/** Text-Prompt eines Jobs (null bei Skizzen-Jobs oder wenn nicht erreichbar). */
+export async function fetchJobPrompt(jobId) {
+  if (!jobId || jobId === DEMO_JOB_ID || !hasLiveApi()) return null;
+  try {
+    const { data } = await apiClient.get(statusUrl(jobId));
+    return data?.prompt ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function watch3DJob(jobId, onProgress) {
   return pollJobStatus(jobId, onProgress);
 }
@@ -559,6 +604,9 @@ async function pollJobStatus(jobId, onProgress) {
         message = "Model ready!";
       } else if (phaseHint && /refine|textur/i.test(phaseHint)) {
         message = "Refining textures…";
+      } else if (data.prompt) {
+        // Text-to-3D: Backend meldet Preview als 0-50 %, Refine als 50-100 %.
+        message = nextProgress >= 50 ? "Adding textures…" : "Shaping your model…";
       } else if (nextProgress < maxProgress) {
         message = "Next generation step…";
       }

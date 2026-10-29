@@ -37,7 +37,7 @@ export function getProjectByJobId(jobId) {
   return readAll().find((p) => p.jobId === jobId) ?? null;
 }
 
-export function saveProject({ jobId, imageUrl, imageSource }) {
+export function saveProject({ jobId, imageUrl, imageSource, prompt }) {
   if (!jobId) return null;
 
   const thumb = imageUrl && !imageUrl.startsWith("blob:") ? imageUrl : null;
@@ -49,6 +49,7 @@ export function saveProject({ jobId, imageUrl, imageSource }) {
     createdAt: previous?.createdAt ?? createdAt,
     thumb: thumb ?? previous?.thumb ?? null,
     imageSource: imageSource ?? previous?.imageSource ?? null,
+    prompt: prompt ?? previous?.prompt ?? null,
   };
 
   const withoutDup = readAll().filter((p) => p.jobId !== jobId);

@@ -7,6 +7,8 @@ import RequireAuth from "./components/RequireAuth";
 import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage";
 import HomePage from "./pages/HomePage";
+import SketchMenuPage from "./pages/SketchMenuPage";
+import TextToModelPage from "./pages/TextToModelPage";
 import CameraPage from "./pages/CameraPage";
 import UploadPage from "./pages/UploadPage";
 import PreviewPage from "./pages/PreviewPage";
@@ -21,6 +23,7 @@ import ErrorGenerationPage from "./pages/ErrorGenerationPage";
 import ErrorNetworkPage from "./pages/ErrorNetworkPage";
 import ErrorTimeoutPage from "./pages/ErrorTimeoutPage";
 import ErrorInvalidImagePage from "./pages/ErrorInvalidImagePage";
+
 function App() {
   return (
     <AuthProvider>
@@ -33,6 +36,8 @@ function App() {
               <Route path="/admin" element={<AdminPage />} />
               <Route element={<RequireAuth />}>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/sketch" element={<SketchMenuPage />} />
+                <Route path="/text" element={<TextToModelPage />} />
                 <Route path="/camera" element={<CameraPage />} />
                 <Route path="/upload" element={<UploadPage />} />
                 <Route path="/preview" element={<PreviewPage />} />

@@ -10,11 +10,13 @@ import ViewerFooter from "../components/ViewerFooter";
 import { useSketch } from "../context/SketchContext";
 import { useGeneration } from "../context/GenerationContext";
 import { useHydrateViewerJob } from "../hooks/useHydrateViewerJob";
+import { shortenPrompt, useJobPrompt } from "../hooks/useJobPrompt";
 import { isMobile } from "../utils/device";
 import { collectSketchCandidates } from "../utils/sketchSrc";
 import "../styles/ViewerPage.css";
 import "../styles/ARPage.css";
 import "../styles/SketchLightbox.css";
+import "../styles/TextToModelPage.css";
 
 function ARPage() {
   const navigate = useNavigate();
@@ -25,6 +27,8 @@ function ARPage() {
   const hasModel = Boolean(modelUrl || effectiveJobId);
   const mobile = isMobile();
   const [showSketch, setShowSketch] = useState(false);
+  // Text-to-3D-Modelle zeigen statt der (nicht vorhandenen) Skizze den Prompt.
+  const prompt = useJobPrompt(jobId ?? effectiveJobId);
 
   const sketchCandidates = useMemo(
     () =>
@@ -64,7 +68,12 @@ function ARPage() {
           <ARSharePanel jobId={jobId ?? effectiveJobId} modelUrl={modelUrl} />
         )}
 
-        {sketchCandidates.length > 0 && (
+        {prompt ? (
+          <div className="prompt-card">
+            <span className="prompt-card-label">Your prompt</span>
+            <p className="prompt-card-text">{shortenPrompt(prompt)}</p>
+          </div>
+        ) : sketchCandidates.length > 0 && (
           <button
             type="button"
             className="viewer-sketch-thumb viewer-sketch-thumb--compact viewer-sketch-thumb--clickable"
@@ -80,7 +89,8 @@ function ARPage() {
         )}
       </div>
 
-      {showSketch && sketchCandidates.length > 0 && (
+
+      {showSketch && !prompt && sketchCandidates.length > 0 && (
         <SketchLightbox
           candidates={sketchCandidates}
           alt="Original sketch"

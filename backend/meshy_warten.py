@@ -2,6 +2,7 @@ import requests
 import time
 from typing import Callable, Optional
 from config import API_KEY
+from meshy_download import task_url
 
 
 def warten(
@@ -11,7 +12,7 @@ def warten(
 ) -> dict:
     """
     Pollt Meshy bis der Job fertig ist.
-    `job_type` z. B. "image-to-3d" oder "retexture".
+    `job_type`: "image-to-3d", "text-to-3d" oder "retexture".
     `progress_callback(progress_percent, status_string)` wird bei jeder Änderung aufgerufen.
     """
     headers = {"Authorization": f"Bearer {API_KEY}"}
@@ -19,7 +20,7 @@ def warten(
 
     while True:
         task = requests.get(
-            f"https://api.meshy.ai/openapi/v1/{job_type}/{task_id}",
+            task_url(task_id, job_type),
             headers=headers,
         ).json()
 

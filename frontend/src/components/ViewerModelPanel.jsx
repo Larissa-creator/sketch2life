@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { FaHandPointer } from "react-icons/fa6";
+import {
+  FaArrowDown,
+  FaArrowUp,
+  FaRedoAlt,
+  FaSearchMinus,
+  FaSearchPlus,
+  FaUndoAlt,
+} from "react-icons/fa";
 import { toAbsoluteUrl } from "../utils/ar";
 import { isMobile } from "../utils/device";
 
@@ -17,8 +24,8 @@ function ViewerModelPanel({ src }) {
       : src;
 
   useEffect(() => {
-    const el = viewerRef.current;
-    if (!el || !displaySrc) {
+    const viewer = viewerRef.current;
+    if (!viewer || !displaySrc) {
       setLoadState("error");
       return undefined;
     }
@@ -28,13 +35,13 @@ function ViewerModelPanel({ src }) {
     const onLoad = () => setLoadState("ready");
     const onError = () => setLoadState("error");
 
-    el.addEventListener("load", onLoad);
-    el.addEventListener("error", onError);
-    if (el.loaded) onLoad();
+    viewer.addEventListener("load", onLoad);
+    viewer.addEventListener("error", onError);
+    if (viewer.loaded) onLoad();
 
     return () => {
-      el.removeEventListener("load", onLoad);
-      el.removeEventListener("error", onError);
+      viewer.removeEventListener("load", onLoad);
+      viewer.removeEventListener("error", onError);
     };
   }, [displaySrc]);
 
@@ -93,7 +100,7 @@ function ViewerModelPanel({ src }) {
         )}
         {loadState === "error" && (
           <p className="viewer-model-overlay viewer-model-overlay--error">
-            Could not load the 3D model. Check Wi-Fi and try again, or tap Download GLB.
+            Could not load the 3D model. Check Wi-Fi and try again.
           </p>
         )}
       </div>
@@ -107,7 +114,7 @@ function ViewerModelPanel({ src }) {
             aria-label="Rotate left"
             onClick={() => rotate(-1)}
           >
-            ↺
+            <FaUndoAlt aria-hidden />
           </button>
           
           <button
@@ -116,7 +123,7 @@ function ViewerModelPanel({ src }) {
             aria-label="Rotate right"
             onClick={() => rotate(1)}
           >
-            ↻
+            <FaRedoAlt aria-hidden />
           </button>
 
           <span className="viewer-touch-divider" aria-hidden />
@@ -127,7 +134,7 @@ function ViewerModelPanel({ src }) {
             aria-label="Tilt up"
             onClick={() => tilt(-1)}
           >
-            ↑
+            <FaArrowUp aria-hidden />
           </button>
           <button
             type="button"
@@ -135,7 +142,7 @@ function ViewerModelPanel({ src }) {
             aria-label="Tilt down"
             onClick={() => tilt(1)}
           >
-            ↓
+            <FaArrowDown aria-hidden />
           </button>
 
           <span className="viewer-touch-divider" aria-hidden />
@@ -146,7 +153,7 @@ function ViewerModelPanel({ src }) {
             aria-label="Zoom out"
             onClick={() => zoom(true)}
           >
-            −
+            <FaSearchMinus aria-hidden />
           </button>
           <button
             type="button"
@@ -154,11 +161,13 @@ function ViewerModelPanel({ src }) {
             aria-label="Zoom in"
             onClick={() => zoom(false)}
           >
-            +
+            <FaSearchPlus aria-hidden />
           </button>
         </div>
         <p className="viewer-touch-legend">
-          ↺↻ rotate | ↑↓ tilt | +− zoom
+          <FaUndoAlt aria-hidden /> <FaRedoAlt aria-hidden /> rotate |{" "}
+          <FaArrowUp aria-hidden /> <FaArrowDown aria-hidden /> tilt |{" "}
+          <FaSearchMinus aria-hidden /> <FaSearchPlus aria-hidden /> zoom
         </p>
       </div>
     </div>

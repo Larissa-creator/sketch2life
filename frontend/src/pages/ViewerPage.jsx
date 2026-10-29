@@ -9,7 +9,7 @@ import SketchImage from "../components/SketchImage";
 import { useSketch } from "../context/SketchContext";
 import { useGeneration } from "../context/GenerationContext";
 import { useHydrateViewerJob } from "../hooks/useHydrateViewerJob";
-import { getARPlatformInfo } from "../utils/device";
+import { shortenPrompt, useJobPrompt } from "../hooks/useJobPrompt";
 import { resolveModelSrc } from "../utils/ar";
 import {
   getGlbDownloadUrl,
@@ -18,9 +18,9 @@ import {
 import { downloadFile } from "../utils/download";
 import { collectSketchCandidates } from "../utils/sketchSrc";
 import { resolveBackTarget } from "../utils/navigation";
-import { goToViewerTab } from "../utils/viewerNav";
 import "../styles/ViewerPage.css";
 import "../styles/SketchLightbox.css";
+import "../styles/TextToModelPage.css";
 
 function ViewerPage() {
   const navigate = useNavigate();
@@ -31,13 +31,14 @@ function ViewerPage() {
   const { jobs } = useGeneration();
   const { hydrated, effectiveJobId } = useHydrateViewerJob();
   const [showSketch, setShowSketch] = useState(false);
+  // Text-to-3D-Modelle zeigen statt der Skizze den Prompt.
+  const prompt = useJobPrompt(effectiveJobId);
 
   const sketchCandidates = useMemo(
     () => collectSketchCandidates({ jobId: effectiveJobId, imageUrl, jobs }),
     [jobs, effectiveJobId, imageUrl],
   );
   const src = resolveModelSrc(modelUrl, effectiveJobId);
-  const ar = getARPlatformInfo();
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState("");
 
@@ -107,7 +108,12 @@ function ViewerPage() {
           Rotate and zoom with buttons or touch gestures.
         </p>
 
-        {sketchCandidates.length > 0 && (
+        {prompt ? (
+          <div className="prompt-card">
+            <span className="prompt-card-label">Your prompt</span>
+            <p className="prompt-card-text">{shortenPrompt(prompt)}</p>
+          </div>
+        ) : sketchCandidates.length > 0 && (
           <button
             type="button"
             className="viewer-sketch-thumb viewer-sketch-thumb--clickable"
@@ -122,24 +128,18 @@ function ViewerPage() {
           </button>
         )}
 
-        <div className="viewer-actions">
-          <PrimaryButton
-            text="Open AR View"
-            onClick={() => goToViewerTab(navigate, location, "/ar")}
-          />
-          <p className="hint viewer-ar-hint">
-            {ar.platform === "desktop" && "Best tested on a phone"}
-          </p>
+        {/* <div className="viewer-actions">
           <PrimaryButton
             text={downloading ? "Downloading..." : "Download GLB"}
             disabled={downloading}
             onClick={onDownload}
           />
           {downloadError && <p className="hint viewer-download-error">{downloadError}</p>}
-        </div>
+        </div> */}
+
       </div>
 
-      {showSketch && sketchCandidates.length > 0 && (
+      {showSketch && !prompt && sketchCandidates.length > 0 && (
         <SketchLightbox
           candidates={sketchCandidates}
           alt="Original sketch"

@@ -1,10 +1,11 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { MdViewInAr } from "react-icons/md";
-import { FaPrint } from "react-icons/fa";
+import { FaHome, FaPrint } from "react-icons/fa";
 import { goToViewerTab } from "../utils/viewerNav";
 import "../styles/BottomNav.css";
 
 const ITEMS = [
+  { id: "home", label: "Home", path: "/", Icon: FaHome },
   { id: "ar", label: "AR View", path: "/ar", Icon: MdViewInAr },
   { id: "print", label: "3D Print", path: "/print", Icon: FaPrint },
 ];

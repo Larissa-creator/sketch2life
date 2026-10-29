@@ -31,7 +31,11 @@ from auth import (
     require_session,
 )
 from bildverarbeitung import bild_kodieren_bytes
-from meshy_api import auftrag_erstellen
+from meshy_api import (
+    sketch_to_3d,
+    text_to_3d_refine,
+    text_to_3d_preview,
+)
 from meshy_warten import warten
 from meshy_download import (
     datei_herunterladen,
@@ -112,6 +116,9 @@ VARIANT_PROMPTS_BY_ID = {
     "3": "holz",
 }
 
+# Meshy lehnt längere Text-to-3D-Prompts mit 400 ab.
+TEXT_PROMPT_MAX = 800
+
 
 class VariantStatus(BaseModel):
     variant_id: str
@@ -132,10 +139,15 @@ class JobStatus(BaseModel):
     error: Optional[str] = None
     consumed_credits: Optional[int] = None
     timings: Optional[dict] = None
+    prompt: Optional[str] = None
     variants: list[VariantStatus] = []
 
 
 class RetextureRequest(BaseModel):
+    prompt: str
+
+
+class TextToModelRequest(BaseModel):
     prompt: str
 
 
@@ -252,6 +264,7 @@ def _persist_job_meta(job_id: str, job: dict):
         "task_id": job.get("task_id"),
         "job_type": job.get("job_type", "image-to-3d"),
         "status": job.get("status"),
+        "prompt": job.get("prompt"),
         "variants": {
             vid: {
                 "task_id": v.get("task_id"),
@@ -318,10 +331,19 @@ def _restore_job_if_needed(job_id: str) -> Optional[dict]:
         "job_type": (meta or {}).get("job_type", "image-to-3d"),
         "status": (meta or {}).get("status", "ready" if glb_path else "pending"),
         "progress": (meta or {}).get("progress", 100 if glb_path else 0),
+        "prompt": (meta or {}).get("prompt"),
         "variants": variants,
     }
     jobs[job_id] = job
     return job
+
+
+def _job_prompt(job_id: str) -> Optional[str]:
+    """Text-Prompt eines Text-to-3D-Jobs; None bei Skizzen-Jobs."""
+    job = jobs.get(job_id)
+    if job and job.get("prompt"):
+        return job["prompt"]
+    return (_load_job_meta(job_id) or {}).get("prompt")
 
 
 def _load_job_meta(job_id: str) -> Optional[dict]:
@@ -378,8 +400,8 @@ async def process_job(job_id: str, image_data: str):
     timings = {}
     try:
         t0 = time.time()
-        task_id = await asyncio.to_thread(auftrag_erstellen, image_data)
-        timings["auftrag_erstellen"] = round(time.time() - t0, 2)
+        task_id = await asyncio.to_thread(sketch_to_3d, image_data)
+        timings["sketch_to_3d"] = round(time.time() - t0, 2)
         jobs[job_id]["task_id"] = task_id
         jobs[job_id]["status"] = "processing"
 
@@ -394,7 +416,7 @@ async def process_job(job_id: str, image_data: str):
 
         task = await asyncio.to_thread(poll)
         timings["meshy_warten"] = round(time.time() - t1, 2)
-        timings["total"] = round(timings["auftrag_erstellen"] + timings["meshy_warten"], 2)
+        timings["total"] = round(timings["sketch_to_3d"] + timings["meshy_warten"], 2)
 
         jobs[job_id].update({
             "status": "ready",
@@ -407,6 +429,67 @@ async def process_job(job_id: str, image_data: str):
 
     except Exception as exc:
         jobs[job_id].update({"status": "failed", "error": str(exc)})
+
+
+async def _text_schritt(job_id: str, erstellen, arg: str, offset: int):
+    """Ein Text-to-3D-Schritt bei Meshy: Task anlegen und abwarten.
+    Jeder Schritt füllt die Hälfte des Fortschrittsbalkens ab `offset`."""
+    task_id = await asyncio.to_thread(erstellen, arg)
+    jobs[job_id]["status"] = "processing"
+    task = await asyncio.to_thread(
+        warten,
+        task_id,
+        lambda p, s: _update_progress(job_id, offset + p // 2, s),
+        "text-to-3d",
+    )
+    return task_id, task
+
+
+async def process_text_job(job_id: str, prompt: str):
+    """Preview (Geometrie), dann Refine (Textur). Nur der Refine-Task wird
+    als task_id gespeichert - Download, AR und Druck nutzen also immer das
+    texturierte Modell, wie bei Image-to-3D."""
+    try:
+        t0 = time.time()
+        preview_id, _ = await _text_schritt(
+            job_id, text_to_3d_preview, prompt, 0
+        )
+        refine_id, task = await _text_schritt(
+            job_id, text_to_3d_refine, preview_id, 50
+        )
+        jobs[job_id].update({
+            "task_id": refine_id,
+            "status": "ready",
+            "progress": 100,
+            "consumed_credits": task.get("consumed_credits"),
+            "job_type": "text-to-3d",
+            "timings": {"total": round(time.time() - t0, 2)},
+        })
+        _persist_job_meta(job_id, jobs[job_id])
+
+    except Exception as exc:
+        jobs[job_id].update({"status": "failed", "error": str(exc)})
+
+
+def _start_text_job(
+    job_id: str,
+    prompt: str,
+    background_tasks: BackgroundTasks,
+    variants: Optional[dict] = None,
+) -> dict:
+    jobs[job_id] = {
+        "status": "pending",
+        "progress": 0,
+        "task_id": None,
+        "job_type": "text-to-3d",
+        "prompt": prompt,
+        "variants": variants or {},
+    }
+    # Sofort speichern: Text-Jobs haben keine Skizze, der Prompt ist das
+    # einzige, woraus sich das Projekt später neu erzeugen lässt.
+    _persist_job_meta(job_id, jobs[job_id])
+    background_tasks.add_task(process_text_job, job_id, prompt)
+    return jobs[job_id]
 
 
 async def retexture_job(job_id: str, variant_id: str, prompt: str):
@@ -690,6 +773,7 @@ def admin_workshop_models(
             "has_sketch": find_sketch_path(job_id) is not None,
             "has_3mf": find_model_3mf(job_id) is not None,
             "color": _read_selected_color(job_id),
+            "prompt": _job_prompt(job_id),
         })
     models.sort(key=lambda m: (m["attendee"].casefold(), m["created_at"]))
     return {"workshop": workshop, "models": models}
@@ -763,6 +847,39 @@ async def convert(
     background_tasks.add_task(process_job, job_id, image_data)
 
     return _job_to_response(job_id, jobs[job_id])
+
+
+@app.post("/text-to-3d", response_model=JobStatus, status_code=202)
+async def text_to_3d(
+    body: TextToModelRequest,
+    background_tasks: BackgroundTasks,
+    session: dict = Depends(require_attendee),
+):
+    from config import API_KEY
+
+    if not API_KEY or API_KEY.strip() in ("", "your_meshy_key_here"):
+        raise HTTPException(
+            status_code=503,
+            detail="API_KEY not configured. Set it in backend/.env and restart the backend.",
+        )
+
+    prompt = " ".join(body.prompt.split())
+    if not prompt:
+        raise HTTPException(status_code=400, detail="Prompt darf nicht leer sein.")
+    if len(prompt) > TEXT_PROMPT_MAX:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Prompt ist zu lang (max. {TEXT_PROMPT_MAX} Zeichen).",
+        )
+
+    _consume_generation(session)
+
+    job_id = str(uuid.uuid4())
+    register_generation(job_id)
+    db.register_job(job_id, session["workshop_id"], session["attendee"])
+
+    job = _start_text_job(job_id, prompt, background_tasks)
+    return _job_to_response(job_id, job)
 
 
 @app.get("/status/{job_id}", response_model=JobStatus)
@@ -973,7 +1090,8 @@ async def generate_from_existing_sketch(
     background_tasks: BackgroundTasks,
     session: dict = Depends(require_attendee),
 ):
-    """Start 3D generation from a sketch already stored on the server (same job_id)."""
+    """Start 3D generation again for an existing job (same job_id): from the
+    stored sketch, or for Text-to-3D jobs from the stored prompt."""
     from config import API_KEY
 
     if not API_KEY or API_KEY.strip() in ("", "your_meshy_key_here"):
@@ -985,7 +1103,8 @@ async def generate_from_existing_sketch(
     _require_job_access(session, job_id)
 
     sketch_path = _find_sketch_path(job_id)
-    if not sketch_path:
+    prompt = None if sketch_path else _job_prompt(job_id)
+    if not sketch_path and not prompt:
         raise HTTPException(status_code=404, detail="Sketch not found on server.")
 
     existing = _restore_job_if_needed(job_id)
@@ -993,9 +1112,6 @@ async def generate_from_existing_sketch(
         return _job_to_response(job_id, existing)
 
     _consume_generation(session)
-
-    raw = sketch_path.read_bytes()
-    image_data = bild_kodieren_bytes(raw, _sketch_media_type(sketch_path))
 
     for target in (
         model_glb_path(job_id),
@@ -1005,6 +1121,15 @@ async def generate_from_existing_sketch(
     ):
         if target.exists():
             target.unlink()
+
+    if prompt:
+        job = _start_text_job(
+            job_id, prompt, background_tasks, (existing or {}).get("variants")
+        )
+        return _job_to_response(job_id, job)
+
+    raw = sketch_path.read_bytes()
+    image_data = bild_kodieren_bytes(raw, _sketch_media_type(sketch_path))
 
     jobs[job_id] = {
         "status": "pending",
@@ -1032,6 +1157,7 @@ def list_projects(session: dict = Depends(require_session)):
                 "has_3mf": find_model_3mf(job_id) is not None,
                 "has_sketch": find_sketch_path(job_id) is not None,
                 "has_glb": _job_is_model_ready(job_id),
+                "prompt": _job_prompt(job_id),
             })
         return {"projects": projects[:50]}
 
@@ -1060,6 +1186,7 @@ def list_projects(session: dict = Depends(require_session)):
             "has_3mf": find_model_3mf(normalized) is not None,
             "has_sketch": find_sketch_path(normalized) is not None,
             "has_glb": _job_is_model_ready(normalized),
+            "prompt": _job_prompt(normalized),
         })
 
     projects.sort(key=lambda p: p["created_at"], reverse=True)

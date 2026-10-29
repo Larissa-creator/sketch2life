@@ -54,7 +54,7 @@ function PreviewPage() {
 
   const retakePath =
     imageSource === "demo"
-      ? "/"
+      ? "/sketch"
       : imageSource === "camera"
         ? "/camera"
         : "/upload";

@@ -16,7 +16,7 @@ function TipsPage() {
 
   return (
     <>
-      <PageHeader title="Tips for better results" backTo="/" />
+      <PageHeader title="Tips for better results" backTo="/sketch" />
 
       <div className="page-body">
         <p className="hint">
